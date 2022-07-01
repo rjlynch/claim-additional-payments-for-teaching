@@ -1,7 +1,7 @@
 require "rails_helper"
 
 # TODO - LUPP claims change behaviour. These scenarios to be fixed when reminder service stories are progressed
-RSpec.feature "Eligible later Teacher Early-Career Payments", pending: "Reminder service" do
+RSpec.feature "Eligible later Teacher Early-Career Payments" do
   extend ActionView::Helpers::NumberHelper
 
   describe "claim" do
@@ -16,30 +16,26 @@ RSpec.feature "Eligible later Teacher Early-Career Payments", pending: "Reminder
     end
 
     context "with uplift school" do
-      let(:current_school) { School.find(ActiveRecord::FixtureSet.identify(:penistone_grammar_school, :uuid)) }
+      let(:current_school) { create(:school, :levelling_up_premium_payments_ineligible, :early_career_payments_eligible, :early_career_payments_local_authority_uplift) }
       [
-        # {
-        #   policy_year: AcademicYear.new(2021),
-        #   eligible_later: [
-        #     {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2019), award_amount: number_to_currency(7_500, precision: 0), next_eligible_year: AcademicYear.new(2022)},
-        #     {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2020), award_amount: number_to_currency(3_000, precision: 0), next_eligible_year: AcademicYear.new(2022)},
-        #     {itt_subject: "physics", itt_academic_year: AcademicYear.new(2020), award_amount: number_to_currency(3_000, precision: 0), next_eligible_year: AcademicYear.new(2022)},
-        #     {itt_subject: "chemistry", itt_academic_year: AcademicYear.new(2020), award_amount: number_to_currency(3_000, precision: 0), next_eligible_year: AcademicYear.new(2022)},
-        #     {itt_subject: "foreign_languages", itt_academic_year: AcademicYear.new(2020), award_amount: number_to_currency(3_000, precision: 0), next_eligible_year: AcademicYear.new(2022)}
-        #   ]
-        # },
-        # {
-        #   policy_year: AcademicYear.new(2022),
-        #   eligible_later: [
-        #     {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2018), award_amount: number_to_currency(7_500, precision: 0), next_eligible_year: AcademicYear.new(2023)}
-        #   ]
-        # },
-        # {
-        #   policy_year: AcademicYear.new(2023),
-        #   eligible_later: [
-        #     {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2019), award_amount: number_to_currency(7_500, precision: 0), next_eligible_year: AcademicYear.new(2024)}
-        #   ]
-        # }
+        {
+          policy_year: AcademicYear.new(2022),
+          eligible_later: [
+            {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2018), award_amount: number_to_currency(7_500, precision: 0), next_eligible_year: AcademicYear.new(2023)}
+          ]
+        },
+        {
+          policy_year: AcademicYear.new(2023),
+          eligible_later: [
+            {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2019), award_amount: number_to_currency(7_500, precision: 0), next_eligible_year: AcademicYear.new(2024)}
+          ]
+        },
+        {
+          policy_year: AcademicYear.new(2024),
+          eligible_later: [
+            {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2018), award_amount: number_to_currency(7_500, precision: 0), next_eligible_year: AcademicYear.new(2025)}
+          ]
+        }
       ].each do |policy|
         context "when accepting claims for AcademicYear #{policy[:policy_year]}" do
           before do
@@ -89,18 +85,8 @@ RSpec.feature "Eligible later Teacher Early-Career Payments", pending: "Reminder
 
     # TODO - LUPP claims change behaviour. These scenarios to be fixed when reminder service stories are progressed
     context "without uplift school" do
-      let(:current_school) { School.find(ActiveRecord::FixtureSet.identify(:hampstead_school, :uuid)) }
+      let(:current_school) { create(:school, :levelling_up_premium_payments_ineligible, :early_career_payments_eligible, :early_career_payments_local_authority_no_uplift) }
       [
-        {
-          policy_year: AcademicYear.new(2021),
-          eligible_later: [
-            {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2019), award_amount: number_to_currency(5_000, precision: 0), next_eligible_year: AcademicYear.new(2022)},
-            {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2020), award_amount: number_to_currency(2_000, precision: 0), next_eligible_year: AcademicYear.new(2022)},
-            {itt_subject: "physics", itt_academic_year: AcademicYear.new(2020), award_amount: number_to_currency(2_000, precision: 0), next_eligible_year: AcademicYear.new(2022)},
-            {itt_subject: "chemistry", itt_academic_year: AcademicYear.new(2020), award_amount: number_to_currency(2_000, precision: 0), next_eligible_year: AcademicYear.new(2022)},
-            {itt_subject: "foreign_languages", itt_academic_year: AcademicYear.new(2020), award_amount: number_to_currency(2_000, precision: 0), next_eligible_year: AcademicYear.new(2022)}
-          ]
-        },
         {
           policy_year: AcademicYear.new(2022),
           eligible_later: [
@@ -111,6 +97,12 @@ RSpec.feature "Eligible later Teacher Early-Career Payments", pending: "Reminder
           policy_year: AcademicYear.new(2023),
           eligible_later: [
             {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2019), award_amount: number_to_currency(5_000, precision: 0), next_eligible_year: AcademicYear.new(2024)}
+          ]
+        },
+        {
+          policy_year: AcademicYear.new(2024),
+          eligible_later: [
+            {itt_subject: "mathematics", itt_academic_year: AcademicYear.new(2018), award_amount: number_to_currency(5_000, precision: 0), next_eligible_year: AcademicYear.new(2025)}
           ]
         }
       ].each do |policy|

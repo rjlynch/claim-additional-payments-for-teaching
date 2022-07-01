@@ -28,6 +28,14 @@ FactoryBot.define do
       phase { School::SECONDARY_PHASES.sample }
     end
 
+    trait :early_career_payments_local_authority_uplift do
+      local_authority_district { LocalAuthorityDistrict.find(ActiveRecord::FixtureSet.identify(:barnsley, :uuid)) }
+    end
+
+    trait :early_career_payments_local_authority_no_uplift do
+      local_authority_district { LocalAuthorityDistrict.find(ActiveRecord::FixtureSet.identify(:camden, :uuid)) }
+    end
+
     trait :levelling_up_premium_payments_eligible do
       # this is a huge array but if it ever cycles, there'll be a message about duplicate URNs
       sequence :urn, LevellingUpPremiumPayments::Award.urn_to_award_amount_in_pounds(AcademicYear.new(2022)).keys.cycle
