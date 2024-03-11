@@ -11,9 +11,20 @@ module ClaimsHelper
       a << [t("questions.payroll_gender"), t("answers.payroll_gender.#{claim.payroll_gender}"), "gender"] unless claim.payroll_gender_verified?
       a << [t("questions.teacher_reference_number"), claim.teacher_reference_number, "teacher-reference-number"] if show_trn(claim)
       a << [t("questions.national_insurance_number"), claim.national_insurance_number, "personal-details"] if show_nino(claim)
-      a << [t("questions.email_address"), claim.email_address, claim.email_address_check? ? "select-email" : "email-address"]
-      a << [t("questions.provide_mobile_number"), (claim.provide_mobile_number ? "Yes" : "No"), "provide-mobile-number"] if claim.has_ecp_or_lupp_policy?
-      a << [t("questions.mobile_number"), claim.mobile_number, "mobile-number"] if claim.has_ecp_or_lupp_policy? && claim.provide_mobile_number?
+
+      a << if claim.logged_in_with_tid? && claim.teacher_id_user_info["email"].present?
+        [t("questions.select_email.heading"), claim.email_address, "select-email"]
+      else
+        [t("questions.email_address"), claim.email_address, "email-address"]
+      end
+
+      if claim.logged_in_with_tid? && claim.teacher_id_user_info["phone_number"].present?
+        select_mobile_answer = claim.mobile_number? ? claim.mobile_number : t("questions.select_phone_number.decline")
+        a << [t("questions.select_phone_number.heading"), select_mobile_answer, "select-mobile"]
+      else
+        a << [t("questions.provide_mobile_number"), claim.provide_mobile_number? ? "Yes" : "No", "provide-mobile-number"]
+        a << [t("questions.mobile_number"), claim.mobile_number, "mobile-number"] if claim.provide_mobile_number?
+      end
     end
   end
 
@@ -40,6 +51,8 @@ module ClaimsHelper
       a << ["Building society roll number", claim.building_society_roll_number, change_slug] if claim.building_society_roll_number.present?
     end
   end
+
+  private
 
   def date_of_birth_string(claim)
     claim.date_of_birth && l(claim.date_of_birth)
