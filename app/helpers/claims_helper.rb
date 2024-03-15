@@ -4,27 +4,16 @@ module ClaimsHelper
   end
 
   def identity_answers(claim)
-    [].tap do |a|
-      a << [t("questions.name"), claim.full_name, "personal-details"] if show_name(claim)
-      a << [t("questions.address.generic.title"), claim.address, "address"] unless claim.address_from_govuk_verify?
-      a << [t("questions.date_of_birth"), date_of_birth_string(claim), "personal-details"] if show_dob(claim)
-      a << [t("questions.payroll_gender"), t("answers.payroll_gender.#{claim.payroll_gender}"), "gender"] unless claim.payroll_gender_verified?
-      a << [t("questions.teacher_reference_number"), claim.teacher_reference_number, "teacher-reference-number"] if show_trn(claim)
-      a << [t("questions.national_insurance_number"), claim.national_insurance_number, "personal-details"] if show_nino(claim)
+    [].tap do |answers|
+      answers << [t("questions.name"), claim.full_name, "personal-details"] if show_name(claim)
+      answers << [t("questions.address.generic.title"), claim.address, "address"] unless claim.address_from_govuk_verify?
+      answers << [t("questions.date_of_birth"), date_of_birth_string(claim), "personal-details"] if show_dob(claim)
+      answers << [t("questions.payroll_gender"), t("answers.payroll_gender.#{claim.payroll_gender}"), "gender"] unless claim.payroll_gender_verified?
+      answers << [t("questions.teacher_reference_number"), claim.teacher_reference_number, "teacher-reference-number"] if show_trn(claim)
+      answers << [t("questions.national_insurance_number"), claim.national_insurance_number, "personal-details"] if show_nino(claim)
 
-      a << if claim.logged_in_with_tid? && claim.teacher_id_user_info["email"].present?
-        [t("questions.select_email.heading"), claim.email_address, "select-email"]
-      else
-        [t("questions.email_address"), claim.email_address, "email-address"]
-      end
-
-      if claim.logged_in_with_tid? && claim.teacher_id_user_info["phone_number"].present?
-        select_mobile_answer = claim.mobile_number? ? claim.mobile_number : t("questions.select_phone_number.decline")
-        a << [t("questions.select_phone_number.heading"), select_mobile_answer, "select-mobile"]
-      else
-        a << [t("questions.provide_mobile_number"), claim.provide_mobile_number? ? "Yes" : "No", "provide-mobile-number"]
-        a << [t("questions.mobile_number"), claim.mobile_number, "mobile-number"] if claim.provide_mobile_number?
-      end
+      answers.concat(email_answers(claim))
+      answers.concat(mobile_answers(claim))
     end
   end
 
@@ -76,5 +65,45 @@ module ClaimsHelper
 
   def show_trn(claim)
     !(claim.logged_in_with_tid? && claim.trn_same_as_tid?)
+  end
+
+  def email_answers(claim)
+    [].tap do |answers|
+      return answers << [t("questions.email_address"), claim.email_address, "email-address"] unless claim.logged_in_with_tid?
+
+      # TID-route
+      answers << if claim.email_address_check?
+        [t("questions.select_email.heading"), claim.email_address, "select-email"]
+      else
+        # When an email selection couldn't be made, we don't want to link back to the `select-email`
+        # slug, but rather to `email-address`. This indicates that an email was provided
+        # manually due to it not being present in Teacher ID.
+        [t("questions.email_address"), claim.email_address, "email-address"]
+      end
+    end
+  end
+
+  def mobile_answers(claim)
+    [].tap do |answers|
+      unless claim.logged_in_with_tid?
+        answers << [t("questions.provide_mobile_number"), claim.provide_mobile_number? ? "Yes" : "No", "provide-mobile-number"]
+        answers << [t("questions.mobile_number"), claim.mobile_number, "mobile-number"] if claim.provide_mobile_number?
+
+        return answers
+      end
+
+      # TID-route
+      if claim.mobile_check.present?
+        select_mobile_answer = claim.mobile_number? ? claim.mobile_number : t("questions.select_phone_number.decline")
+        answers << [t("questions.select_phone_number.heading"), select_mobile_answer, "select-mobile"]
+      else
+        # When a mobile number selection couldn't be made, we don't want to link back to the
+        # `select-mobile` slug, but rather to `mobile-number`. This indicates that a mobile number
+        # may have been provided manually due to it not being present in Teacher ID. We also need to
+        # show the answer to the `provide-mobile-number` question and allow the user to change it.
+        answers << [t("questions.provide_mobile_number"), claim.provide_mobile_number? ? "Yes" : "No", "provide-mobile-number"]
+        answers << [t("questions.mobile_number"), claim.mobile_number, "mobile-number"] if claim.provide_mobile_number?
+      end
+    end
   end
 end

@@ -42,9 +42,9 @@ describe ClaimsHelper do
         date_of_birth:,
         teacher_reference_number:,
         national_insurance_number:,
-        email_address_check: true,
+        email_address_check:,
         email_address: "test@email.com",
-        mobile_check: "use",
+        mobile_check:,
         provide_mobile_number: true,
         mobile_number: "01234567890",
         payroll_gender: :dont_know,
@@ -60,8 +60,8 @@ describe ClaimsHelper do
         "trn" => teacher_reference_number,
         "birthdate" => date_of_birth.to_s,
         "ni_number" => national_insurance_number,
-        "phone_number" => tid_phone_number,
-        "email" => tid_email
+        "phone_number" => "01234567890",
+        "email" => "test@email.com"
       }
     }
 
@@ -72,11 +72,11 @@ describe ClaimsHelper do
         context "logged in with Teacher ID" do
           let(:logged_in_with_tid) { true }
 
-          context "when the email and phone number are present in Teacher ID" do
-            let(:tid_phone_number) { "01234567890" }
-            let(:tid_email) { "test@email.com" }
+          context "when the user could make a selection for email and phone number" do
+            let(:email_address_check) { true }
+            let(:mobile_check) { "use" }
 
-            it "includes only answers provided by the user, including the email and mobile number (from Teacher ID)" do
+            it "includes only answers provided by the user, including the email and mobile number from Teacher ID" do
               expected_answers = [
                 [I18n.t("questions.address.generic.title"), "Flat 1, 1 Test Road, Test Town, AB1 2CD", "address"],
                 [I18n.t("questions.payroll_gender"), "Don’t know", "gender"],
@@ -87,7 +87,7 @@ describe ClaimsHelper do
               expect(helper.identity_answers(claim)).to eq expected_answers
             end
 
-            it "does not display the mobile number when one has not been provided" do
+            it "does not display the mobile number when the user declined to be contacted by mobile" do
               claim.provide_mobile_number = false
               claim.mobile_number = nil
               claim.mobile_check = "decline"
@@ -103,11 +103,11 @@ describe ClaimsHelper do
             end
           end
 
-          context "when the email and phone number are not present in Teacher ID" do
-            let(:tid_phone_number) { nil }
-            let(:tid_email) { nil }
+          context "when the user could not make a selection for email and phone number" do
+            let(:email_address_check) { nil }
+            let(:mobile_check) { nil }
 
-            it "includes only answers provided by the user, including the email and mobile number (not from Teacher ID)" do
+            it "includes only answers provided by the user, including the email and mobile number provided manually" do
               expected_answers = [
                 [I18n.t("questions.address.generic.title"), "Flat 1, 1 Test Road, Test Town, AB1 2CD", "address"],
                 [I18n.t("questions.payroll_gender"), "Don’t know", "gender"],
@@ -119,7 +119,7 @@ describe ClaimsHelper do
               expect(helper.identity_answers(claim)).to eq expected_answers
             end
 
-            it "does not display the mobile number when one has not been provided" do
+            it "does not display the mobile number when the user declined to be contacted by mobile" do
               claim.provide_mobile_number = false
               claim.mobile_number = nil
 
@@ -138,6 +138,8 @@ describe ClaimsHelper do
         context "not logged in with Teacher ID" do
           let(:logged_in_with_tid) { false }
           let(:teacher_id_user_info) { {} }
+          let(:email_address_check) { nil }
+          let(:mobile_check) { nil }
 
           it "returns an array of identity-related questions and answers for displaying to the user for review" do
             expected_answers = [
